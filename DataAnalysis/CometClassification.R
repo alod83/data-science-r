@@ -1,5 +1,6 @@
 library(cometr)
 library(caret)
+library(Metrics)
 
 df <- read.csv('../source/breast-cancer.csv')
 df$diagnosis <- as.factor(df$diagnosis)
@@ -24,7 +25,6 @@ for (method in c('knn', 'rpart')){
     test_set$pred <- predict(model, test_set)
     
     acc <- accuracy(test_set$diagnosis, test_set$pred)
-    test_set$factor_pred <- as.factor(test_set$pred)
     
     exp$log_metric("accuracy", acc, step=i)
     exp$add_tags(list(method))

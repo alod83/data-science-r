@@ -1,0 +1,89 @@
+---
+title: "Classification"
+output:
+  html_document:
+    df_print: paged
+---
+
+# Load libraries
+
+```{r}
+library(caret)
+```
+
+# Load CSV
+
+```{r}
+df <- read.csv('../source/heart.csv')
+```
+
+# Set Seed
+
+```{r}
+set.seed(12)
+```
+
+# Dataset Preprocessing
+
+-   encode output
+```{r}
+df$output
+```
+
+
+```{r}
+df$output <- as.factor(df$output)
+df$output
+```
+
+-   scale and center
+```{r}
+preProcess <- c("center","scale")
+```
+
+# Train/Test Splitting
+
+```{r}
+i <- createDataPartition(y = df$output, times = 1, p = 0.8, list = FALSE)
+training_set <- df[i,]
+test_set <- df[-i,]
+```
+
+# Define Grid Search with cross validation
+
+```{r}
+trControl <- trainControl(method = "repeatedcv",number = 10,repeats = 10)
+```
+
+# Train the model
+
+```{r}
+model <- train(output ~ ., method='knn', data = training_set, metric='Accuracy', preProcess = preProcess, trControl=trControl)
+```
+
+# Test the model
+
+```{r}
+test_set$pred <- predict(model, test_set)
+
+test_set$factor_pred <- as.factor(test_set$pred)
+test_set$factor_truth <- as.factor(test_set$output)
+precision <- posPredValue(test_set$factor_truth, test_set$factor_pred)
+recall <- sensitivity(test_set$factor_truth, test_set$factor_pred)
+precision
+recall
+```
+```{r}
+cm <- confusionMatrix(test_set$pred, test_set$output)
+accuracy <- cm$overall[1]
+confusion_matrix <- cm$table
+cm$table
+accuracy
+```
+# ROC curve
+```{r}
+library(pROC)
+test_set$pred <- predict(model, test_set,probability=TRUE)
+roc_curve = roc(test_set$output, predictor=factor(test_set$pred,ordered = TRUE))
+plot(roc_curve, col="red", lwd=3)
+```
